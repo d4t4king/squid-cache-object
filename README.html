@@ -1,0 +1,180 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<title>SquidCacheObject - Parse a Squid cache file to retrieve data for administative tasks</title>
+<style type="text/css">
+<!--
+h2 {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 16px;
+    font-weight: bold;
+    color: #000000;
+}
+p {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    font-weight: normal;
+    color: #000000;
+}
+h1 {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 18px;
+    font-weight: bold;
+    color: #000000;
+}
+body {
+    width: 700px;
+}
+blockquote {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    font-weight: normal;
+    color: #000000;
+}
+.snip {
+    background-color: #EEE;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    padding: 3px;
+}
+.imagelabel {
+    font-family: Verdana, sans-serif;
+    font-size: 9px;
+    font-style: italilic;
+    margin-top: -15px;
+}
+-->
+</style>
+</head>
+<body>
+<h1>SquidCacheObject - Parse a Squid cache file for administative tasks</h1>
+<h2>Introduction</h2>
+<blockquote>The Squid cache proxy is a popular HTTP caching proxy for Linux based web servers,
+        it is highly optimized and configurable and all in all a great application. Despite
+        its popularity, certain internal aspects are a mystery and parts of the programmer
+        documentation are outdated and incorrect. This class, SquidCacheObject, is designed
+        to help administrators and programmers out by easing the burden of parsing cache
+        files (known as cache objects in Squid land) themselves and having to read the
+        source code so that they may get useful information from that cache file to carry
+        out administrative tasks like selective purging (you cannot just delete the cache
+        file from the file system) or general cache analysis.<br /><br />
+
+        This class will create an object that represents the cache file, with all the meta
+        data (and the actual file data if you choose) conveniently stored as public
+        properties.</blockquote>
+
+<h2>Please note</h2>
+<blockquote>The default permissions on the Squid cache directory is setup to be readable by the
+        squid user only, this means you will need to set the uid of the script to that of
+        the squid user (with apache suexec or similar modules or the functions provided by
+        PHP) or change the file mode on the Squid cache directory.</blockquote>
+
+<h2>How to use it</h2>
+<blockquote>This is a short run through of how to use the class, for anything not covered
+        here read the source code, it is heavily commented.</blockquote>
+<blockquote><strong>1.</strong> First (and most obvious) we need to include the class into the script, that can
+           be achieved using a line similar to the following:
+  <div class="snip"><code><span style="color: #000000"><span style="color: #007700">include_once(</span><span style="color: #DD0000">'SquidCacheObject.class.inc.php'</span><span style="color: #007700">);&nbsp;</span></span></code></div>
+</blockquote>
+<blockquote><strong>2.</strong>Now we instantiate (make) the object and pass the full path to the cache object
+           you want to parse, remember the user the script runs as will need read
+           permissions on the Squid cache file or Squid cache directory
+  <div class="snip"><code><span style="color: #000000"><span style="color: #0000BB">$CacheObject&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">SquidCacheObject</span><span style="color: #007700">(</span><span style="color: #DD0000">'/path/to/squid/cache/00/00/00/0000001'</span><span style="color: #007700">);</span></span></code></div>
+</blockquote>
+<blockquote><strong>3.</strong>Now you can start accessing the various properties of the Squid cache object,
+           remember not all the meta data types will be found so not all of the properties
+           will be set for each and everything cache object, however, the general rule of
+           thumb is that if you don't find what you need in a property it will be found
+           in the SquidCacheObject::Headers property (you will need to parse these on your
+           own by splitting the lines). The properties are (Remember I am just using the
+           name $CacheObject as an example, for clarity):
+  <div class="snip"><code><span style="color: #000000"><span style="color: #FF8000">//&nbsp;This&nbsp;is&nbsp;the&nbsp;key&nbsp;for&nbsp;the&nbsp;URL
+<br /></span><span style="color: #0000BB">$CacheObject</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">KeyURL</span><span style="color: #007700">;
+<br />
+<br /></span><span style="color: #FF8000">//&nbsp;This&nbsp;is&nbsp;a&nbsp;unique&nbsp;SHA&nbsp;hash&nbsp;for&nbsp;the&nbsp;cache&nbsp;file
+<br /></span><span style="color: #0000BB">$CacheObject</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">KeySHA</span><span style="color: #007700">;
+<br />
+<br /></span><span style="color: #FF8000">//&nbsp;This&nbsp;is&nbsp;a&nbsp;unique&nbsp;MD5&nbsp;hash&nbsp;for&nbsp;the&nbsp;cache&nbsp;object
+<br /></span><span style="color: #0000BB">$CacheObject</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">KeyMD5</span><span style="color: #007700">;
+<br />
+<br /></span><span style="color: #FF8000">//&nbsp;This&nbsp;is&nbsp;the&nbsp;original&nbsp;URL&nbsp;of&nbsp;the&nbsp;content&nbsp;that&nbsp;this&nbsp;cache&nbsp;object&nbsp;holds
+<br /></span><span style="color: #0000BB">$CacheObject</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">URL</span><span style="color: #007700">;
+<br />
+<br /></span><span style="color: #FF8000">//&nbsp;This&nbsp;is&nbsp;the&nbsp;human&nbsp;readable&nbsp;size&nbsp;of&nbsp;the&nbsp;cache&nbsp;file
+<br /></span><span style="color: #0000BB">$CacheObject</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">Size</span><span style="color: #007700">;
+<br />
+<br /></span><span style="color: #FF8000">//&nbsp;This&nbsp;is&nbsp;the&nbsp;human&nbsp;readable&nbsp;creation&nbsp;date&nbsp;(dd/mm/yy)&nbsp;of&nbsp;the&nbsp;cache&nbsp;file
+<br /></span><span style="color: #0000BB">$CacheObject</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">Created</span><span style="color: #007700">;
+<br />
+<br /></span><span style="color: #FF8000">//&nbsp;This&nbsp;is&nbsp;the&nbsp;human&nbsp;readable&nbsp;modified&nbsp;date&nbsp;(dd/mm/yy)&nbsp;of&nbsp;the&nbsp;cache&nbsp;file
+<br /></span><span style="color: #0000BB">$CacheObject</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">Modified</span><span style="color: #007700">;
+<br />
+<br /></span><span style="color: #FF8000">//&nbsp;This&nbsp;is&nbsp;the&nbsp;original&nbsp;HTTP&nbsp;headers&nbsp;from&nbsp;the&nbsp;cached&nbsp;data
+<br /></span><span style="color: #0000BB">$CacheObject</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">Headers</span><span style="color: #007700">;
+<br />
+<br /></span><span style="color: #FF8000">//&nbsp;This&nbsp;is&nbsp;the&nbsp;actual&nbsp;cached&nbsp;file&nbsp;data
+<br /></span><span style="color: #0000BB">$this</span><span style="color: #007700">-&gt;</span><span style="color: #0000BB">Data</span><span style="color: #007700">;</span></span></code></div>
+</blockquote>
+<h2>Optional extras</h2>
+<blockquote>If you are handling a lot of Squid cache files in an administration tool you might want
+        this tool to operate a little faster (it is pretty fast already) and be a little more
+        resource weary to ensure stability and consitancy. To do this you can provide an extra
+        argument when calling the SquidCacheObject, this will ensure that the cache headers
+        and the actual file data that the cache file holds are not parsed, only the cache
+        file's binary meta data will be parsed as well as some general infromation about the
+        file. Please check the example below for a better understanding.
+<div class="snip"><code><span style="color: #000000"><span style="color: #FF8000">//&nbsp;Include&nbsp;the&nbsp;SquidConfigObject&nbsp;class
+<br /></span><span style="color: #007700">include_once(</span><span style="color: #DD0000">''</span><span style="color: #007700">);
+<br />
+<br /></span><span style="color: #FF8000">//&nbsp;Instantiate&nbsp;the&nbsp;SquidCacheObject&nbsp;class&nbsp;and&nbsp;provide&nbsp;an&nbsp;extra&nbsp;argument
+<br /></span><span style="color: #0000BB">$CacheObject&nbsp;</span><span style="color: #007700">=&nbsp;new&nbsp;</span><span style="color: #0000BB">SquidCacheObject</span><span style="color: #007700">(</span><span style="color: #DD0000">'/path/to/squid/cache/00/00/00/0000001'</span><span style="color: #007700">,&nbsp;</span><span style="color: #0000BB">TRUE</span><span style="color: #007700">);
+<br />
+<br /></span><span style="color: #FF8000">//&nbsp;At&nbsp;this&nbsp;point&nbsp;the&nbsp;$CacheObject&nbsp;would&nbsp;not&nbsp;hold&nbsp;anything&nbsp;in&nbsp;the&nbsp;Data&nbsp;and&nbsp;Headers&nbsp;property
+<br /></span><span style="color: #0000BB">var_dump</span><span style="color: #007700">(</span><span style="color: #0000BB">$CacheObject</span><span style="color: #007700">);</span></span></code></div></blockquote>
+<h2>How it works</h2>
+<blockquote>Although the Squid cache file format might change slightly depending on the version
+        that you are using, it usually looks something like this (everything in brackets is
+        the data type):</blockquote>
+<blockquote><div class="snip"><pre>
+meta-data-header  { 0x03, (unsigned int) meta-data-segment-length }
+meta-data-segment {
+
+    meta-data-tuple { (byte) meta-data-type, (unsigned int) meta-data-length, (bytes) meta-data-value }
+    meta-data-tuple { (byte) meta-data-type, (unsigned int) meta-data-length, (bytes) meta-data-value }
+    meta-data-tuple { (byte) meta-data-type, (unsigned int) meta-data-length, (bytes) meta-data-value }
+    ...
+    0x00, 0x00
+}
+HTTP headers...
+HTTP headers...
+
+
+Cache object data
+EOF
+</pre></div></blockquote>
+<blockquote>This means you need to effectively parse the file with 3 parsing regimes, one for the
+        meta data header, one for the actual meta data and one for the HTTP headers and file
+        data. The meta data can be the following types:</blockquote>
+<blockquote><div class="snip"><pre>
+Void         - This is an empty meta data item
+Key URL      - This is key of the URL
+MD5 URL      - This is a unique MD5 hash of the URL
+SHA URL      - This is a unique SHA hash of the URL
+URL          - This is the URL of the original file we cached
+STD          - Unknown to me at this stage
+Hit Metering - A value to define hit metering
+Valid        - A value to determine the contents validity
+End          - This meta data type will signify the end of the meta data segment
+</pre></div></blockquote>
+<blockquote>There is no guarantee which meta data values will be found in which cache object, for
+        instance you might not have a URL meta data type, but you might have the URL in the
+        headers, you should test for your specific system configuration and work from that.</blockquote>
+<h2>About The Author </h2>
+<blockquote>My name is Warren Smith and if you have anything more usefull for me to be doing than making stuff like this, I am available.If you have any bug reports, improvements or cool ideas about this application
+        feel free to drop me an email. I can be contacted at <a href="mailto:smythinc@gmail.com">smythinc@gmail.com</a></blockquote>
+  <h2>Requirements </h2>
+<blockquote>PHP >= 4.3.0 (I have not tested on earlier versions but it could possibly work)</blockquote>
+</body>
+</html>

@@ -1,0 +1,148 @@
+ SquidCacheObject - Parse a Squid cache file to retrieve data for administative tasks
+
+    Introduction
+
+        The Squid cache proxy is a popular HTTP caching proxy for Linux based web servers,
+        it is highly optimized and configurable and all in all a great application. Despite
+        its popularity, certain internal aspects are a mystery and parts of the programmer
+        documentation are outdated and incorrect. This class, SquidCacheObject, is designed
+        to help administrators and programmers out by easing the burden of parsing cache
+        files (known as cache objects in Squid land) themselves and having to read the
+        source code so that they may get useful information from that cache file to carry
+        out administrative tasks like selective purging (you cannot just delete the cache
+        file from the file system) or general cache analysis.
+
+        This class will create an object that represents the cache file, with all the meta
+        data (and the actual file data if you choose) conveniently stored as public
+        properties.
+
+    Please note
+
+        The default permissions on the Squid cache directory is setup to be readable by the
+        squid user only, this means you will need to set the uid of the script to that of
+        the squid user (with apache suexec or similar modules or the functions provided by
+        PHP) or change the file mode on the Squid cache directory.
+
+    How to use it
+
+        This is a short run through of how to use the class, for anything not covered
+        here read the source code, it is heavily commented.
+
+        1. First (and most obvious) we need to include the class into the script, that can
+           be achieved using a line similar to the following:
+
+           include_once('SquidCacheObject.class.inc.php');
+
+        2. Now we instantiate (make) the object and pass the full path to the cache object
+           you want to parse, remember the user the script runs as will need read
+           permissions on the Squid cache file or Squid cache directory
+
+           $CacheObject = new SquidCacheObject('/path/to/squid/cache/00/00/00/0000001');
+
+        3. Now you can start accessing the various properties of the Squid cache object,
+           remember not all the meta data types will be found so not all of the properties
+           will be set for each and everything cache object, however, the general rule of
+           thumb is that if you don't find what you need in a property it will be found
+           in the SquidCacheObject::Headers property (you will need to parse these on your
+           own by splitting the lines). The properties are (Remember I am just using the
+           name $CacheObject as an example, for clarity):
+
+           // This is the key for the URL
+           $CacheObject->KeyURL;
+
+           // This is a unique SHA hash for the cache file
+           $CacheObject->KeySHA;
+
+           // This is a unique MD5 hash for the cache object
+           $CacheObject->KeyMD5;
+
+           // This is the original URL of the content that this cache object holds
+           $CacheObject->URL;
+
+           // This is the human readable size of the cache file
+           $CacheObject->Size;
+
+           // This is the human readable creation date (dd/mm/yy) of the cache file
+           $CacheObject->Created;
+
+           // This is the human readable modified date (dd/mm/yy) of the cache file
+           $CacheObject->Modified;
+
+           // This is the original HTTP headers from the cached data
+           $CacheObject->Headers;
+
+           // This is the actual cached file data
+           $this->Data;
+
+    Optional Extras
+
+        If you are handling a lot of Squid cache files in an administration tool you might want
+        this tool to operate a little faster (it is pretty fast already) and be a little more
+        resource weary to ensure stability and consitancy. To do this you can provide an extra
+        argument when calling the SquidCacheObject, this will ensure that the cache headers
+        and the actual file data that the cache file holds are not parsed, only the cache
+        file's binary meta data will be parsed as well as some general infromation about the
+        file. Please check the example below for a better understanding.
+
+        // Include the SquidConfigObject class
+        include_once('');
+
+        // Instantiate the SquidCacheObject class and provide an extra argument
+        $CacheObject = new SquidCacheObject('/path/to/squid/cache/00/00/00/0000001', TRUE);
+
+        // At this point the $CacheObject would not hold anything in the Data and Headers property
+        var_dump($CacheObject);
+
+    How it works
+
+        Although the Squid cache file format might change slightly depending on the version
+        that you are using, it usually looks something like this (everything in brackets is
+        the data type):
+
+            meta-data-header  { 0x03, (unsigned int) meta-data-segment-length }
+            meta-data-segment {
+
+                meta-data-tuple { (byte) meta-data-type, (unsigned int) meta-data-length, (bytes) meta-data-value }
+                meta-data-tuple { (byte) meta-data-type, (unsigned int) meta-data-length, (bytes) meta-data-value }
+                meta-data-tuple { (byte) meta-data-type, (unsigned int) meta-data-length, (bytes) meta-data-value }
+                ...
+                0x00, 0x00
+            }
+            HTTP headers...
+            HTTP headers...
+
+
+            Cache object data
+            EOF
+
+        This means you need to effectively parse the file with 3 parsing regimes, one for the
+        meta data header, one for the actual meta data and one for the HTTP headers and file
+        data. The meta data can be the following types:
+
+            Void         - This is an empty meta data item
+            Key URL      - This is key of the URL
+            MD5 URL      - This is a unique MD5 hash of the URL
+            SHA URL      - This is a unique SHA hash of the URL
+            URL          - This is the URL of the original file we cached
+            STD          - Unknown to me at this stage
+            Hit Metering - A value to define hit metering
+            Valid        - A value to determine the contents validity
+            End          - This meta data type will signify the end of the meta data segment
+
+        There is no guarantee which meta data values will be found in which cache object, for
+        instance you might not have a URL meta data type, but you might have the URL in the
+        headers, you should test for your specific system configuration and work from that.
+
+    About The Author
+
+        My name is Warren Smith and if you have anything more worthwhile or interesting
+        for me to be doing than making stuff like this, I am available.
+
+        If you have any bug reports, improvements or cool ideas about this application
+        feel free to drop me an email.
+
+        I can be contacted at smythinc (at) gmail (dot) com
+
+    Requirements
+
+        PHP >= 4.3.0 (I have not tested on earlier versions but it could possibly work)
