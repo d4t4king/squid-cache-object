@@ -47,7 +47,7 @@ $VERSION	= 0.01;
 
 
 # These are ther different meta types from the enums.h in the Squid source
-%ENUMS = (
+my %ENUMS = (
 	'STORE_META_VOID'			=> 0,
 	'STORE_META_KEY_URL'		=> 1,
 	'STORE_META_KEY_SHA'		=> 2,
@@ -132,8 +132,8 @@ my $HeaderOnly = false;
 # returns void
 sub SquidCacheObject($$) {
 	
-	$cacherObject = shift(@_);
-	$headerOnly = shift(@_) || false;
+	my $cacheObject = shift(@_);
+	my $headerOnly = shift(@_) || false;
 
 	# If we have a cache object
 	if ($cacheObject) {
@@ -153,7 +153,7 @@ sub SquidCacheObject($$) {
 # return boolean
 sub Load($) {
 
-	$cacheObject = shift(@_);
+	my $cacheObject = shift(@_);
 
 	# If the squid cache object exists
 	if (-e $cacheObject) {
@@ -237,7 +237,7 @@ sub HexString($) {
 		# Loop through the bytes
 		for (my $i = 0; $i < length($bytes); $i++) {
 			# Get the hex value for this byte
-			my $Hex = hex(ord($bytes[$i]));
+			my $Hex = hex(ord($$bytes[$i]));
 
 			# If this hex character is only 1 character in length add a preceding 0.
 			if (length($Hex) == 1) { $Hex = "0".$Hex; }
