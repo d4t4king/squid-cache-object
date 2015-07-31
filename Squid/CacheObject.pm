@@ -114,4 +114,74 @@ sub SquidCacheObject($$) {
 		$self->Load($cacheObject);
 	}
 }
+
+sub Load($) {
+
+	$cacheObject = shift(@_);
+
+	# If the squid cache object exists
+	if (-e $cacheObject) {
+		# if the file is readable
+		if ( -r $cacheObject ) {
+			# firs record the cache object's file size
+			my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
+				$atime,$mtime,$ctime,$blksize,$blocks)
+					= stat($cacheObject);
+			$self->Size = $self->HumanReadable($size);
+			$self->Created = $ctime; 		### FIX ME:  Format into "human readable"
+			$self->Modified = $mtime; 		### Fix ME:  Format into "human readable"
+
+			my $fh; 
+			open $fh, "<$cacheObject" or die "Couldn't open file for reading: $! \n";
+			if ($fh) {
+				# Find out how big the meta data header is
+
+				# Read the meta data header
+
+				# If this looks like a Squid cache object
+					# Set the meta data length
+					# Loop through the meta data segment
+						# Get the current position of the file pointer
+						# Read the next meta data tuple
+						# If the first character is a newline, we're done.
+							# Return tge file pointer to its first position plus one byte
+							# exit the loop; we have all our meta data
+					# unpack the meta data tuple's type and length
+					# Read the meta data value from the file pointer
+					# Handle different meta data types differently
+					# CASE
+				# if we are not getting the headers only
+				if (! $self->HeaderOnly) {
+					# loop through the HTTP header and file data
+						# get the next chunk of data from the file pointer
+						# if we already have the header
+							# then we just add this to the file data
+						# else
+							# Add this byte to the headers property
+
+				# close the file pointer
+				#
+				# # if we got here, we were successful
+				return true;
+
+			} else {
+				# close the cache file
+				# Show the error to the user
+				# This does not look like a cache file
+				return false;
+			}
+		} else {
+			# tell the user about the error
+			$self->Error('Insufficient permissions to read the cache file specified');
+
+			# failure
+			return false;
+		}
+	} else {
+		# Show the error to the user
+		$self->Error('The cache file specified does not exist.');
+
+		return false;
+	}
+}
 1;
