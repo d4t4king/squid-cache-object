@@ -5,6 +5,39 @@ use warnings;
 use Exporter;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 
+# The following is adapted from the PHP SquidCachObject Class
+# referenced here:
+# http://www.phpclasses.org/package/3362-PHP-Parse-a-binary-Squid-cache-file.html#view_files/files/15882
+# You must be registered to view the code.
+#+----------------------------------------------------------------------+ 
+#| SquidCacheObject v0.6 | 
+#+----------------------------------------------------------------------+ 
+#| Copyright (c) 2006 Warren Smith ( smythinc 'at' gmail 'dot' com ) | 
+#+----------------------------------------------------------------------+ 
+#| This library is free software; you can redistribute it and/or modify | 
+#| it under the terms of the GNU Lesser General Public License as | 
+#| published by the Free Software Foundation; either version 2.1 of the | 
+#| License, or (at your option) any later version. | 
+#| | 
+#| This library is distributed in the hope that it will be useful, but | 
+#| WITHOUT ANY WARRANTY; without even the implied warranty of | 
+#| MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU | 
+#| Lesser General Public License for more details. | 
+#| | 
+#| You should have received a copy of the GNU Lesser General Public | 
+#| License along with this library; if not, write to the Free Software | 
+#| Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 | 
+#| USA | 
+#+----------------------------------------------------------------------+ 
+#| Simple is good. | 
+#+----------------------------------------------------------------------+ 
+# 
+#+----------------------------------------------------------------------+ 
+#| Package: SquidCacheObject v0.6 | 
+#| Class : SquidCacheObject | 
+#| Created: 25/08/2006 | 
+#+----------------------------------------------------------------------+
+ 
 $VERSION	= 0.01;
 @ISA		= qw(Exporter);
 @EXPORT		= ();
@@ -115,6 +148,9 @@ sub SquidCacheObject($$) {
 	}
 }
 
+# load a cache object and parse it into a program object
+#
+# return boolean
 sub Load($) {
 
 	$cacheObject = shift(@_);
@@ -166,7 +202,9 @@ sub Load($) {
 
 			} else {
 				# close the cache file
+				close $fh;
 				# Show the error to the user
+				$self->Error("You did not specify a valid squid cache object or the cache object is corrupted");
 				# This does not look like a cache file
 				return false;
 			}
@@ -184,4 +222,72 @@ sub Load($) {
 		return false;
 	}
 }
+
+# This will get the hex string for some bytes
+#
+# return string
+sub HexString($) {
+	my $bytes = shift(@_);
+
+	# this is the string we'll be returning
+	my $return = '';
+
+	# If we have some bytes to loop through....
+	if ($bytes) {
+		# Loop through the bytes
+		for (my $i = 0; $i < length($bytes); $i++) {
+			# Get the hex value for this byte
+			my $Hex = hex(ord($bytes[$i]));
+
+			# If this hex character is only 1 character in length add a preceding 0.
+			if (length($Hex) == 1) { $Hex = "0".$Hex; }
+
+			# Add this value to the final string
+			$return .= $Hex;
+		}
+	}
+
+	# Return the final string
+	return $return;
+}
+
+# Makes a user readable file size string from the byte value
+#
+# return string
+sub HumanReadable($) {
+	my $bytes = shift(@_) || 0;
+
+	# the return string
+	my $return = '';
+
+	# for files smaller than a kilobyte
+	if ($bytes < 1024) {
+		# we are dealing with bytes
+		$return = $bytes." bytes";
+	} elsif ($bytes < 1048576) {
+		# we are dealing with kilobytes
+		$return = sprintf("%d", ($bytes / 1024))." KB";
+	} elsif ($bytes < 1073741824) {
+		# we are dealing with megabytes
+		$return = sprintf("%d", ($bytes / 1048576))." MB";
+	} else {
+		# and in the unlikely occurrance, we assume anything else
+		# will be gigabytes
+		$return = sprintf("%d", ($bytes / 1073741824))." GB";
+	}
+}
+
+# Report an error to the user specific to their environment
+#
+# return void
+sub Error($) {
+	my $msg = shift(@_) || "";
+
+	# if we have a message to show
+	if ($msg) {
+		# format the message for the command line interface
+		$msg = '[!] '.$msg."\n";
+	}
+}
+
 1;
