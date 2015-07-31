@@ -127,13 +127,28 @@ my $HeaderOnly = false;
 # 		F U N C T I O N S			#
 #####################################
 
+sub new {
+	my ($class_name) = @_;
+
+	my ($self) = { };
+	warn "We just created our new variable...\n";
+
+	bless ($self, $class_name);
+	warn "and now it's a $class_name object!\n";
+
+	$self->{'_created'} = 1;
+	return $self;
+}
+
 # constructor
 #
 # returns void
+# FIX ME!!!  Needs perl-i-fication
 sub SquidCacheObject($$) {
 	
+	my ($self) = shift(@_);
 	my $cacheObject = shift(@_);
-	my $headerOnly = shift(@_) || false;
+	my $headerOnly = shift(@_) || 'false';
 
 	# If we have a cache object
 	if ($cacheObject) {
@@ -153,6 +168,7 @@ sub SquidCacheObject($$) {
 # return boolean
 sub Load($) {
 
+	my ($self) = shift(@_);
 	my $cacheObject = shift(@_);
 
 	# If the squid cache object exists
@@ -171,34 +187,67 @@ sub Load($) {
 			open $fh, "<$cacheObject" or die "Couldn't open file for reading: $! \n";
 			if ($fh) {
 				# Find out how big the meta data header is
+				$Size = length(pack('CI', $ENUMS{'STORE_META_VOID'}, 0));
 
 				# Read the meta data header
+				$MetaDataHeader = unpack('CType/@1/ILength', sysread($fh, $Size));
 
 				# If this looks like a Squid cache object
+				if ($MetaDataHeader->{'Type'} == 3) {
 					# Set the meta data length
+					$self->MetaDataLength = $MetaDataHeader->{'Length'};
 					# Loop through the meta data segment
+					while (!tell($fh) < $self->MetaDataLength) {
 						# Get the current position of the file pointer
+						my $PointerPosition = tell($fh);
 						# Read the next meta data tuple
+						$RawData = sysread($fh, $Size);
 						# If the first character is a newline, we're done.
+						if (ord($RawData[0]) == 10) {
 							# Return tge file pointer to its first position plus one byte
+							sysseek($fh, $PointerPosition + 1);
 							# exit the loop; we have all our meta data
-					# unpack the meta data tuple's type and length
-					# Read the meta data value from the file pointer
-					# Handle different meta data types differently
-					# CASE
+							break;
+						}
+						# unpack the meta data tuple's type and length
+						my $MetaData = unpack('CType/@1/ILength', $RawData);
+						# Read the meta data value from the file pointer
+						my $Value = sysread($fh, $MetaData->{'Length'});
+						# Handle different meta data types differently
+						given ($MetaData->{'Type'}) {
+							# MD5 of URL
+							when ($ENUMS{'STORE_META_KEY_MD5'}) {
+								# Convert this binary into a string and store it as a property
+								$self->KeyMD5 = $self->HexString($Value);
+							}
+							# The URL of the content this cache object holds
+							when ($ENUMS{'STORE_META_URL'}) {
+								# Just add the URL as a property minus that nasty NULL byte
+								$self->URL = substr($Value, 0, -1);
+							}
+						}
+					}
+				}
 				# if we are not getting the headers only
 				if (! $self->HeaderOnly) {
 					# loop through the HTTP header and file data
+					while (! eof($fh)) {
 						# get the next chunk of data from the file pointer
+						my $Data = unpack('CByte', sysread($Pointer, 1));
 						# if we already have the header
+						if (substr($self->Headers, -4) == "\x0D\x0A\x0D\x0A") {
 							# then we just add this to the file data
-						# else
+							$self->Data .= chr($Data->{'Byte'});
+						} else {
 							# Add this byte to the headers property
-
+							$self->Headers .= chr($Data->{'Byte'});
+						}
+					}
+				}
 				# close the file pointer
-				#
-				# # if we got here, we were successful
-				return true;
+				close $fh;
+				# if we got here, we were successful
+				return 'true';
 
 			} else {
 				# close the cache file
@@ -206,20 +255,20 @@ sub Load($) {
 				# Show the error to the user
 				$self->Error("You did not specify a valid squid cache object or the cache object is corrupted");
 				# This does not look like a cache file
-				return false;
+				return 'false';
 			}
 		} else {
 			# tell the user about the error
 			$self->Error('Insufficient permissions to read the cache file specified');
 
 			# failure
-			return false;
+			return 'false';
 		}
 	} else {
 		# Show the error to the user
 		$self->Error('The cache file specified does not exist.');
 
-		return false;
+		return 'false';
 	}
 }
 

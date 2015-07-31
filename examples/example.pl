@@ -3,6 +3,8 @@
 use warnings;
 use strict;
 
+BEGIN { push @INC, '../' }
+
 use Data::Dumper;
 use Squid::CacheObject;
 
