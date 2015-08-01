@@ -2,6 +2,9 @@ package CacheObject;
 
 use strict;
 use warnings;
+no if $] >= 5.017011, warnings => 'experimental::smartmatch';
+use feature qw( switch );
+use Fcntl qw( SEEK_SET SEEK_CUR SEEK_END );
 use Exporter;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 
@@ -121,7 +124,7 @@ my $MetaDataLength = 0;
 # boolean
 #
 # This will determine if we parse all data or just the meta data headers in s Squid::CacheObject
-my $HeaderOnly = false;
+my $HeaderOnly = 'false';
 
 #####################################
 # 		F U N C T I O N S			#
@@ -190,7 +193,7 @@ sub Load($) {
 				$Size = length(pack('CI', $ENUMS{'STORE_META_VOID'}, 0));
 
 				# Read the meta data header
-				$MetaDataHeader = unpack('CType/@1/ILength', sysread($fh, $Size));
+				my $MetaDataHeader = unpack('CType/@1/ILength', sysread($fh, $_, $Size));
 
 				# If this looks like a Squid cache object
 				if ($MetaDataHeader->{'Type'} == 3) {
@@ -201,18 +204,18 @@ sub Load($) {
 						# Get the current position of the file pointer
 						my $PointerPosition = tell($fh);
 						# Read the next meta data tuple
-						$RawData = sysread($fh, $Size);
+						my $RawData = sysread($fh, $_, $Size);
 						# If the first character is a newline, we're done.
-						if (ord($RawData[0]) == 10) {
+						if (ord($RawData->[0]) == 10) {
 							# Return tge file pointer to its first position plus one byte
-							sysseek($fh, $PointerPosition + 1);
+							sysseek($fh, $PointerPosition + 1, SEEK_SET);
 							# exit the loop; we have all our meta data
 							break;
 						}
 						# unpack the meta data tuple's type and length
 						my $MetaData = unpack('CType/@1/ILength', $RawData);
 						# Read the meta data value from the file pointer
-						my $Value = sysread($fh, $MetaData->{'Length'});
+						my $Value = sysread($fh, $_, $MetaData->{'Length'});
 						# Handle different meta data types differently
 						given ($MetaData->{'Type'}) {
 							# MD5 of URL
@@ -233,7 +236,7 @@ sub Load($) {
 					# loop through the HTTP header and file data
 					while (! eof($fh)) {
 						# get the next chunk of data from the file pointer
-						my $Data = unpack('CByte', sysread($Pointer, 1));
+						my $Data = unpack('CByte', sysread($fh, $_, 1));
 						# if we already have the header
 						if (substr($self->Headers, -4) == "\x0D\x0A\x0D\x0A") {
 							# then we just add this to the file data

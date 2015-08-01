@@ -10,7 +10,7 @@ use Squid::CacheObject;
 
 # Instantiate the Squid::CacheObject object, providing 
 # the Squid cache file as an argument
-my $CacheObject = new Squid::CacheObject('');
+my $CacheObject = Squid::CacheObject->new('./00000000');
 
 # Dump the contents of the squid cache object
 print Dumper($CacheObject);
