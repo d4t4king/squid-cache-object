@@ -36,12 +36,12 @@ close F;
 my @row;
 for (my $i=0; $i < length(split(/\n/, $buffer)); $i++) {
 	foreach (split(//, $buffer)) {
-	#if (hex(ord($_)) > 255) {
-	#	print ".";
-	#} else {
-	#	printf("%02x", ord($_));
-		print "$_";
-	#}
+		if (ord($_) > 255) {
+			print ".";
+		} else {
+		#	printf("%02x", ord($_));
+			print "$_";
+		}
 	#	push @{$row[$i]}, $_;
 		#print "\n" if $_ eq "\n";
 		#next if ($_ eq "\n");
