@@ -39,7 +39,7 @@ my %video_types = (
 
 my (%further);
 
-if ((!$cachedir) || (!$file)) {
+if ((!$cachedir) && (!$file)) {
 	&usage;
 }
 

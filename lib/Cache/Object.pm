@@ -56,6 +56,11 @@ sub new {
 	$self->{'_MD5'} = md5_hex($self->{'_URL'});
 	$self->{'_SHA1'} = sha1_hex($self->{'_URL'});
 
+	#my $fh;
+	#open $fh, "<$self->{'_URL'}" or die "Couldn't open file fore reading: $! \n";
+	#my $MetaDataHeader = unpack('CType/@1/ILength', sysread($fh, $_, $self->{'_Size'}));
+	#close $fh;
+	#print Dumper($MetaDataHeader);
 
 	return $self;
 }
