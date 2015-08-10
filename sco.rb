@@ -79,15 +79,17 @@ class SCO
 	alias new initialize
 end
 
-inputfile = ''
-if ARGV.length != 1
-	raise "Expecting only 1 argument: the path the cache file."
-else
-	inputfile = ARGV[0]
-end
+#inputfile = ''
+#if ARGV.length != 1
+#	raise "Expecting only 1 argument: the path the cache file."
+#else
+#	inputfile = ARGV[0]
+#end
 
-sco = SCO.new(inputfile)
+#sco = SCO.new(inputfile)
 
-pp sco
+#pp sco
 
-puts "File size is #{sco.human_readable(sco.size).to_s}."
+#puts "File size is #{sco.human_readable(sco.size).to_s}."
+
+
